@@ -134,6 +134,6 @@ def write_to_file(variables):
 #      writer = csv.writer(f)
 #     writer.writerow(text)
 
-link = 'https://dtf.ru/u/210-daniil-ilyasov'
+link = 'https://dtf.ru/u/3009-oleg-chimde'
 page = get_full_page(link)
 write_to_file(get_variables(page))
