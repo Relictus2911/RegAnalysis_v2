@@ -1,0 +1,4 @@
+#!C:\Users\Admin\PycharmProjects\Reg_Analysis_v2\venv\Scripts\python.exe
+import sys
+from pymorphy2 import cli
+sys.exit(cli.main())
