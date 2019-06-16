@@ -1,26 +1,11 @@
+import os
+
 import requests
 from bs4 import BeautifulSoup
 from selenium import webdriver
 import time
 import csv
 import re
-from nltk.corpus import stopwords
-import pymorphy2
-
-morph = pymorphy2.MorphAnalyzer()
-stops = set(stopwords.words("english")) | set(stopwords.words("russian"))
-
-
-def review_to_wordlist(review):
-    # 1)
-    review_text = re.sub("[^а-яА-Яa-zA-Z]", " ", review)
-    # 2)
-    words = review_text.lower().split()
-    # 3)
-    words = [w for w in words if not w in stops]
-    # 4)
-    words = [morph.parse(w)[0].normal_form for w in words]
-    return (words)
 
 
 def get_full_page(link):
@@ -39,6 +24,11 @@ def get_full_page(link):
     soup = BeautifulSoup(driver.page_source, "lxml")
     return soup
 
+def cleanhtml(raw_html):
+  cleanr = re.compile('<.*?>')
+  cleantext = re.sub(cleanr, '', raw_html)
+  cleantext =re.sub('#.*? ',' ', cleantext)
+  return cleantext
 
 def get_html(url):
     response = requests.get(url)
@@ -58,17 +48,13 @@ def get_text(html):
         new_html = get_html(elem.get('href'))
         try:
             texts = new_html.find("div", class_="b-article").find_all('p')
-            # write_text_to_file(texts)
-            text_length = 0
             cur_text = ''
             for text in texts:
-                text_length += len(str(text))
                 cur_text += str(text)[3:-4]+' '
         except AttributeError:
-            text_length = 0
             cur_text = ''
-        text = []
-        #text = review_to_wordlist(cur_text)
+        cur_text = cleanhtml(cur_text)
+        text_length = len(cur_text)
         result = {'length': text_length, 'text': cur_text}
         all_texts.append(result)
     return all_texts
@@ -110,29 +96,29 @@ def get_variables(html):
 
 
 def write_to_file(variables):
-    #i = 0
-    # = {1: 'likes', 2: 'coms', 3: 'favs', 4: 'size', 5: 'text'}
+    file_name = 'test.tsv'
+    empty_file = False
+    if os.path.isfile(file_name):
+        if os.stat(file_name).st_size == 0:
+            empty_file = True
+    else:
+        empty_file = True
+    name_of_rows = {1: 'likes', 2: 'coms', 3: 'favs', 4: 'size', 5: 'text'}
     for variable in variables:
-        with open('test2.tsv', 'a', encoding='utf-8') as f:
+        with open(file_name, 'a', encoding='utf-8') as f:
             writer = csv.writer(f, delimiter='\t')
-            #if i == 0:
-                #writer.writerow((name_of_rows[1],
-                          #       name_of_rows[2],
-                          #       name_of_rows[3],
-                         #        name_of_rows[4],
-                         #        name_of_rows[5]))
-                #i = 1
+            if empty_file:
+                writer.writerow((name_of_rows[1],
+                                 name_of_rows[2],
+                                 name_of_rows[3],
+                                 name_of_rows[4],
+                                 name_of_rows[5]))
+                empty_file = False
             writer.writerow((variable['likes'],
                              variable['comments'],
                              variable['favorite'],
                              variable['size'],
                              variable['text']))
-
-
-# def write_text_to_file(text):
-#   with open('texts.csv', 'a') as f:
-#      writer = csv.writer(f)
-#     writer.writerow(text)
 
 link = 'https://dtf.ru/u/3009-oleg-chimde'
 page = get_full_page(link)
