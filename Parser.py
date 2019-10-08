@@ -13,6 +13,7 @@ def get_full_page(link):
     driver.get(link)
     pause_time = 3
     last_height = driver.execute_script("return document.body.scrollHeight")
+    stop = 0
     while True:
         driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
         time.sleep(pause_time)
@@ -20,6 +21,9 @@ def get_full_page(link):
         if new_height == last_height:
             break
         last_height = new_height
+        stop +=1
+        if stop == 150:
+            break
     time.sleep(pause_time)
     soup = BeautifulSoup(driver.page_source, "lxml")
     return soup
@@ -120,6 +124,6 @@ def write_to_file(variables):
                              variable['size'],
                              variable['text']))
 
-link = 'https://dtf.ru/u/3009-oleg-chimde'
+link = 'https://dtf.ru/u/3142-vlad-babaev'
 page = get_full_page(link)
 write_to_file(get_variables(page))
